@@ -1,7 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.database import engine
+from app.database import engine, Base
+from app import models
 from sqlalchemy import text
+
+models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
@@ -10,7 +13,7 @@ app.add_middleware(
     allow_origins=["http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"]
+    allow_headers=["*"],
 )
 
 @app.get("/")
