@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine, Base
 from app import models
 from sqlalchemy import text
+import requests
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -25,3 +26,9 @@ def test_db():
     with engine.connect() as conn:
         conn.execute(text("SELECT 1"))
     return {"message": "Database connected successfully"}
+
+@app.get("/parks/{park_id}/wait-times")
+def get_wait_times(park_id: int):
+    url = f"https://queue-times.com/parks/{park_id}/queue_times.json"
+    response = requests.get(url)
+    return response.json()
