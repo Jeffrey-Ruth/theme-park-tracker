@@ -27,8 +27,27 @@ def test_db():
         conn.execute(text("SELECT 1"))
     return {"message": "Database connected successfully"}
 
-@app.get("/parks/{park_id}/wait-times")
-def get_wait_times(park_id: int):
-    url = f"https://queue-times.com/parks/{park_id}/queue_times.json"
-    response = requests.get(url)
-    return response.json()
+@app.get("/parks/wait-times")
+def get_all_wait_times():
+    park_ids = {
+        "Magic Kingdom": 6,
+        "EPCOT": 5,
+        "Hollywood Studios": 7,
+        "Animal Kingdom": 8,
+        "Universal Studios Florida": 65,
+        "Islands of Adventure": 66,
+    }
+    
+    all_rides = []
+    for park_name, park_id in park_ids.items():
+        url = f"https://queue-times.com/parks/{park_id}/queue_times.json"
+        response = requests.get(url)
+        data = response.json()
+        rides = [
+            {**ride, "park": park_name}
+            for land in data["lands"]
+            for ride in land["rides"]
+        ]
+        all_rides.extend(rides)
+    
+    return {"rides": all_rides}
