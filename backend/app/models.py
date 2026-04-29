@@ -25,3 +25,13 @@ class RideLog(Base):
     user_id = Column(Integer, nullable=False)
     ride_id = Column(Integer, nullable=False)
     ride_count = Column(Integer, default=0)
+
+class RideDetail(Base):
+    __tablename__ = "ride_details"
+
+    id = Column(Integer, primary_key=True, index=True)
+    ride_id = Column(Integer, unique=True, nullable=False)
+    name = Column(String, nullable=False)
+    height_requirement = Column(String, nullable=True)
+    year_opened = Column(Integer, nullable=True)
+    speed = Column(String, nullable=True)
