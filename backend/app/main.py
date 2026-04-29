@@ -1,8 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.database import engine, Base
+from app.database import engine, Base, get_db
 from app import models
 from sqlalchemy import text
+from pydantic import BaseModel
+from typing import Optional
+from sqlalchemy.orm import Session
+from fastapi import Depends
 import requests
 
 models.Base.metadata.create_all(bind=engine)
@@ -16,6 +20,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+class RideDetailCreate(BaseModel):
+    ride_id: int
+    name: str
+    height_requirement: Optional[str] = None
+    year_opened: Optional[int] = None
+    speed: Optional[str] = None
+
 
 BLOCKLIST = {
     "Universal Studios Florida - Single Rider",
@@ -100,3 +112,17 @@ def get_all_wait_times():
                     all_rides.append({**ride, "park": park_name})
     
     return {"rides": all_rides}
+
+
+@app.post("/ride-details")
+def add_ride_detail(ride: RideDetailCreate, db: Session = Depends(get_db)):
+    detail = models.RideDetail(**ride.model_dump())
+    db.add(detail)
+    db.commit()
+    db.refresh(detail)
+    return detail
+
+@app.get("/ride-details/{ride_id}")
+def get_ride_detail(ride_id: int, db: Session = Depends(get_db)):
+    detail = db.query(models.RideDetail).filter(models.RideDetail.ride_id == ride_id).first()
+    return detail
