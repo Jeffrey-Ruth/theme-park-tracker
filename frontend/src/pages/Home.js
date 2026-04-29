@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useUser } from '@clerk/clerk-react';
 import axios from 'axios';
 
 function Home() {
@@ -7,6 +8,8 @@ function Home() {
   const [selectedPark, setSelectedPark] = useState('All');
   const [selectedRide, setSelectedRide] = useState(null);
   const [rideDetail, setRideDetail] = useState(null);
+  const [favorites, setFavorites] = useState([]);
+  const { user } = useUser();
 
   useEffect(() => {
     axios.get('http://localhost:8000/parks/wait-times')
@@ -15,6 +18,13 @@ function Home() {
         setRides(sorted);
       });
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      axios.get(`http://localhost:8000/favorites/${user.id}`)
+        .then(response => setFavorites(response.data));
+    }
+  }, [user]);
 
   const handleRideClick = (ride) => {
     setSelectedRide(ride);
@@ -27,6 +37,19 @@ function Home() {
   const closeModal = () => {
     setSelectedRide(null);
     setRideDetail(null);
+  };
+
+  const isFavorited = (rideId) => favorites.some(f => f.ride_id === rideId);
+
+  const toggleFavorite = (rideId) => {
+    if (!user) return;
+    if (isFavorited(rideId)) {
+      axios.delete(`http://localhost:8000/favorites`, { params: { user_id: user.id, ride_id: rideId } })
+        .then(() => setFavorites(favorites.filter(f => f.ride_id !== rideId)));
+    } else {
+      axios.post(`http://localhost:8000/favorites`, null, { params: { user_id: user.id, ride_id: rideId } })
+        .then(response => setFavorites([...favorites, response.data]));
+    }
   };
 
   const parks = ['All', ...new Set(rides.map(ride => ride.park))];
@@ -75,7 +98,15 @@ function Home() {
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           <div style={{ backgroundColor: 'white', padding: '30px', borderRadius: '10px', width: '400px', position: 'relative' }}>
             <button onClick={closeModal} style={{ position: 'absolute', top: '10px', right: '10px' }}>✕</button>
-            <h2>{selectedRide.name}</h2>
+            <h2>
+              {selectedRide.name}
+              <span
+                onClick={() => toggleFavorite(selectedRide.id)}
+                style={{ cursor: 'pointer', marginLeft: '10px' }}
+              >
+                {isFavorited(selectedRide.id) ? '❤️' : '🤍'}
+              </span>
+            </h2>
             <p><strong>Park:</strong> {selectedRide.park}</p>
             <p><strong>Status:</strong> {selectedRide.is_open ? `Open - ${selectedRide.wait_time} min wait` : 'Closed'}</p>
             {rideDetail ? (
