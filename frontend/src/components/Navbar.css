@@ -17,3 +17,17 @@
 .navbar a:hover {
   color: #e94560;
 }
+
+.signin-btn {
+  background-color: #e94560;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.signin-btn:hover {
+  background-color: #c73652;
+}
